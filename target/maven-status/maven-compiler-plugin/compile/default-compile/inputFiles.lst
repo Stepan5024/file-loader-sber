@@ -1,0 +1,12 @@
+C:\Users\bokar\Documents\GitHub\file-loader-sber\src\main\java\ru\sbrf\file_loader\config\KafkaConfig.java
+C:\Users\bokar\Documents\GitHub\file-loader-sber\src\main\java\ru\sbrf\file_loader\consumer\FileUploadConsumer.java
+C:\Users\bokar\Documents\GitHub\file-loader-sber\src\main\java\ru\sbrf\file_loader\controller\FileUploadController.java
+C:\Users\bokar\Documents\GitHub\file-loader-sber\src\main\java\ru\sbrf\file_loader\FileLoaderApplication.java
+C:\Users\bokar\Documents\GitHub\file-loader-sber\src\main\java\ru\sbrf\file_loader\model\FileLink.java
+C:\Users\bokar\Documents\GitHub\file-loader-sber\src\main\java\ru\sbrf\file_loader\model\FileStatus.java
+C:\Users\bokar\Documents\GitHub\file-loader-sber\src\main\java\ru\sbrf\file_loader\model\FileStatusResponse.java
+C:\Users\bokar\Documents\GitHub\file-loader-sber\src\main\java\ru\sbrf\file_loader\model\FileUploadEntity.java
+C:\Users\bokar\Documents\GitHub\file-loader-sber\src\main\java\ru\sbrf\file_loader\model\UploadRequest.java
+C:\Users\bokar\Documents\GitHub\file-loader-sber\src\main\java\ru\sbrf\file_loader\repository\FileUploadRepository.java
+C:\Users\bokar\Documents\GitHub\file-loader-sber\src\main\java\ru\sbrf\file_loader\service\FileStatusService.java
+C:\Users\bokar\Documents\GitHub\file-loader-sber\src\main\java\ru\sbrf\file_loader\service\FileUploadService.java
