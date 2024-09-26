@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.sbrf.file_loader.controller.request.UploadRequest;
 import ru.sbrf.file_loader.controller.response.FileStatus;
 import ru.sbrf.file_loader.controller.response.FileStatusResponse;
@@ -16,6 +17,8 @@ import ru.sbrf.file_loader.util.JsonUtil;
 import ru.sbrf.file_loader.validate.FileUploadValidator;
 
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 @Service
@@ -30,22 +33,29 @@ public class FileUploadService {
     private final FileUploadRepository fileUploadRepository;
 
 
+    private final ExecutorService clientExecutorService = Executors.newCachedThreadPool();
 
-
+    @Transactional
     public void checkAndProcessUploadRequest(UploadRequest request) {
         log.info("Received upload request: {}", request);
 
         // Шаг 1: Валидация
         List<FileLink> duplicateLinks = fileUploadValidator.validate(request);
 
-        // Шаг 2: Обработка корректных данных
+        // Шаг 2: Параллельная обработка файлов для каждого клиента
+        clientExecutorService.submit(() -> processClientFiles(request, duplicateLinks));
+    }
+
+    private void processClientFiles(UploadRequest request, List<FileLink> duplicateLinks) {
+        // Шаг 2.1: Обработка корректных данных
         for (FileLink fileLink : request.getFileLinks()) {
             if (!duplicateLinks.contains(fileLink)) {
+                // логируем
                 fileUploadProcessor.process(request, fileLink);
             }
         }
 
-        // Шаг 3: Отправка в Kafka
+        // Шаг 3: Отправка в Kafka последовательно для клиента
         processFileUploadRequest(request);
 
         // Шаг 4: Если найдены дубликаты, выбросить исключение
@@ -54,7 +64,6 @@ public class FileUploadService {
             throw new DuplicateException("Duplicate records found", duplicateLinks);
         }
     }
-
 
     // Отправляем файлы на обработку
     public void processFileUploadRequest(UploadRequest request) {
@@ -68,6 +77,7 @@ public class FileUploadService {
     }
 
     // Получение статуса загрузки файлов
+    @Transactional(readOnly = true)
     public FileStatusResponse getStatus(String requestId) {
         log.info("Fetching status for requestId: {}", requestId);
 

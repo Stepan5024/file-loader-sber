@@ -1,6 +1,7 @@
 package ru.sbrf.file_loader.validate;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.sbrf.file_loader.controller.request.UploadRequest;
 import ru.sbrf.file_loader.model.FileLink;
 import ru.sbrf.file_loader.model.FileStatusEnum;
@@ -21,6 +22,7 @@ public class FileUploadValidatorImpl implements FileUploadValidator {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<FileLink> validate(UploadRequest request) {
         List<FileLink> duplicateLinks = new ArrayList<>();
 

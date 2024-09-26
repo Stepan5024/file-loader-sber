@@ -27,14 +27,11 @@ public class SimplyFileUploader implements FileUploader {
         log.info("Starting upload for file: {}", fileLink.getFileLink());
 
         try {
-            // Генерируем случайное время задержки в диапазоне от minDelay до maxDelay
             int delay = random.nextInt(maxDelay - minDelay + 1) + minDelay;
             log.info("Simulating upload delay of {} milliseconds for file: {}", delay, fileLink.getFileLink());
 
-            // Симулируем время загрузки файла
             Thread.sleep(delay);
 
-            // Считаем загрузку успешной
             log.info("Upload successful for file: {}", fileLink.getFileLink());
             return true;
         } catch (InterruptedException e) {

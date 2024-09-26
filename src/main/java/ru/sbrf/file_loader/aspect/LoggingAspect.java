@@ -39,7 +39,7 @@ public class LoggingAspect {
             log.info("Execution time for {}.{} = {} ms", className, methodName, stopWatch.getTime());
             return result;
         } catch (Throwable exception) {
-            log.error("Exception in method [{}].{}: {}", className, methodName, exception);
+            log.error("Exception in method [{}].{}: ", className, methodName, exception);
             throw exception;
         }
     }

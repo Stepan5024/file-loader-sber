@@ -42,15 +42,12 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(DuplicateException.class)
     public ResponseEntity<ErrorDetail> handleDataValueException(DuplicateException e) {
-        // Формируем сообщение об ошибке, включая список дубликатов
         String duplicatesMessage = e.getDuplicates().stream()
-                .map(FileLink::getFileLink) // Преобразуем каждый дубликат в строку (fileLink)
+                .map(FileLink::getFileLink)
                 .collect(Collectors.joining(", ", "Duplicate records: [", "]"));
 
-        // Сообщение об ошибFке включает описание и список дубликатов
         String errorMessage = e.getMessage() + ". " + duplicatesMessage;
 
-        // Создаем объект ErrorDetail с новым сообщением
         ErrorDetail errorDetail = new ErrorDetail("DuplicateException", errorMessage, LocalDateTime.now());
 
         return ResponseEntity.status(HttpStatus.CONFLICT).body(errorDetail);

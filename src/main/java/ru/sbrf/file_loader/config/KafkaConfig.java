@@ -37,17 +37,14 @@ public class KafkaConfig {
 
     @Bean
     public DefaultErrorHandler errorHandler(KafkaTemplate<String, String> kafkaTemplate) {
-        // Настройка backoff - стратегия повторных попыток с увеличением времени
-        ExponentialBackOffWithMaxRetries backOff = new ExponentialBackOffWithMaxRetries(5);
+        ExponentialBackOffWithMaxRetries backOff = new ExponentialBackOffWithMaxRetries(1);
         backOff.setInitialInterval(1000L);
         backOff.setMultiplier(2);
         backOff.setMaxInterval(10000L);
 
-        // Обработчик ошибок с использованием backoff
         DefaultErrorHandler errorHandler = new DefaultErrorHandler(backOff);
         errorHandler.addNotRetryableExceptions(IllegalStateException.class); // Исключаем повторные попытки для IllegalStateException
 
-        // Логирование ошибок
         errorHandler.setRetryListeners((record, exception, deliveryAttempt) -> {
             if (exception instanceof IllegalStateException) {
                 log.error("Duplicate record found for requestId: {}, attempt: {}", record.key(), deliveryAttempt);
