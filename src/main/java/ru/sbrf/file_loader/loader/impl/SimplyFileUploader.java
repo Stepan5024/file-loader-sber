@@ -7,14 +7,12 @@ import org.springframework.stereotype.Service;
 import ru.sbrf.file_loader.loader.FileUploader;
 import ru.sbrf.file_loader.model.FileLink;
 
-import java.util.Random;
+import java.util.concurrent.ThreadLocalRandom;
 
 @Service
 @Slf4j
 public class SimplyFileUploader implements FileUploader {
-
-    private final Random random = new Random();
-
+    ThreadLocalRandom random = ThreadLocalRandom.current();
     // Минимальное и максимальное время задержки
     @Value("${file.upload.min.delay}")
     private int minDelay;
@@ -27,7 +25,7 @@ public class SimplyFileUploader implements FileUploader {
         log.info("Starting upload for file: {}", fileLink.getFileLink());
 
         try {
-            int delay = random.nextInt(maxDelay - minDelay + 1) + minDelay;
+            int delay = random.nextInt(minDelay, maxDelay + 1);
             log.info("Simulating upload delay of {} milliseconds for file: {}", delay, fileLink.getFileLink());
 
             Thread.sleep(delay);

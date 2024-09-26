@@ -1,0 +1,28 @@
+
+spring:
+  application:
+    name: file-loader
+  kafka:
+    bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer:
+      group-id: file_upload_group
+    producer:
+      bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+  datasource:
+    url: jdbc:h2:mem:file-loader
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: password
+  h2:
+    console:
+      enabled: true
+  jpa:
+    hibernate:
+      ddl-auto: none
+
+file:
+  upload:
+    min:
+      delay: 10_000
+    max:
+      delay: 60_000

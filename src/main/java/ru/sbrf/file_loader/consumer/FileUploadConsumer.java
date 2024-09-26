@@ -6,17 +6,13 @@ import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import ru.sbrf.file_loader.controller.request.UploadRequest;
 import ru.sbrf.file_loader.loader.FileUploader;
 import ru.sbrf.file_loader.model.FileLink;
+import ru.sbrf.file_loader.model.FileProcessingMessageDto;
 import ru.sbrf.file_loader.model.FileStatusEnum;
 import ru.sbrf.file_loader.model.FileUploadEntity;
 import ru.sbrf.file_loader.repository.FileUploadRepository;
 import ru.sbrf.file_loader.util.JsonUtil;
-
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @AllArgsConstructor
@@ -26,49 +22,41 @@ public class FileUploadConsumer {
     private final FileUploadRepository fileUploadRepository;
     private final FileUploader fileUploader;
 
-    @Transactional
     @KafkaListener(topics = "file_upload_topic", groupId = "file_upload_group", concurrency = "10")
-    public void handleFileUpload(String fileLinkJson, @Header(KafkaHeaders.RECEIVED_KEY) String requestId) {
+    public void handleFileUpload(String messageJson, @Header(KafkaHeaders.RECEIVED_KEY) String requestId) {
+        long threadId = Thread.currentThread().getId();
+        log.info("Thread {} started handling file upload for messageJson: {}", threadId, messageJson);
+
         try {
-            FileLink fileLink = JsonUtil.fromJson(fileLinkJson, FileLink.class);
-            UploadRequest request = getUploadRequestByRequestId(requestId);
+            FileProcessingMessageDto message = JsonUtil.fromJson(messageJson, FileProcessingMessageDto.class);
 
-            assert fileLink != null;
-            log.info("Received file link for processing: {}, requestId: {}", fileLink.getFileLink(), requestId);
-            updateFileStatus(request, fileLink.getFileLink(), FileStatusEnum.IN_PROGRESS);
+            log.info("Thread {} is processing file link: {} for requestId: {}", threadId, message.getFileLink(), message.getRequestId());
 
-            boolean success = fileUploader.uploadFile(fileLink);
+            // Обновляем статус на IN_PROGRESS
+            updateFileStatus(message, FileStatusEnum.IN_PROGRESS);
+
+            // Выполняем загрузку файла
+            boolean success = fileUploader.uploadFile(new FileLink(message.getFileLink()));
+
+            // Обновляем статус в зависимости от результата
             FileStatusEnum status = success ? FileStatusEnum.DONE : FileStatusEnum.FAILED;
-            updateFileStatus(request, fileLink.getFileLink(), status);
+            updateFileStatus(message, status);
 
-        } catch (IllegalStateException e) {
-            log.error("Duplicate request for requestId: {} and fileLink: {}", requestId, e.getMessage(), e);
-            throw e;
         } catch (Exception e) {
             log.error("Error processing file upload: {}", e.getMessage(), e);
+            // Возможно, стоит добавить механизм повторных попыток или уведомления
         }
     }
 
-    private UploadRequest getUploadRequestByRequestId(String requestId) {
-        String consumerName = fileUploadRepository.findConsumerByRequestId(requestId);
-
-        List<String> fileLinksStr = fileUploadRepository.findFileLinksByRequestId(requestId);
-
-        List<FileLink> fileLinks = fileLinksStr.stream()
-                .map(link -> {
-                    FileLink fileLink = new FileLink();
-                    fileLink.setFileLink(link);
-                    return fileLink;
-                })
-                .collect(Collectors.toList());
-        return new UploadRequest(requestId, consumerName, fileLinks);
-    }
-
-    private void updateFileStatus(UploadRequest request, String fileLink, FileStatusEnum status) {
-        FileUploadEntity newEntity = new FileUploadEntity(request.getRequestId(), fileLink, status, request.getConsumer());
+    private void updateFileStatus(FileProcessingMessageDto message, FileStatusEnum status) {
+        FileUploadEntity newEntity = new FileUploadEntity(
+                message.getRequestId(),
+                message.getFileLink(),
+                status,
+                message.getConsumerName()
+        );
         fileUploadRepository.save(newEntity);
-        log.info("Added new log entry for requestId: {}, fileLink: {}, status: {}", request.getRequestId(), fileLink, status);
-
+        log.info("Updated status for requestId: {}, fileLink: {}, status: {}",
+                message.getRequestId(), message.getFileLink(), status);
     }
-
 }

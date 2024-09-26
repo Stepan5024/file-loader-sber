@@ -7,6 +7,8 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class FileLink {
+public class FileProcessingMessageDto {
+    private String requestId;
+    private String consumerName;
     private String fileLink;
 }
