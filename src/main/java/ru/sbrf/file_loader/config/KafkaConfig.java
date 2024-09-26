@@ -1,5 +1,6 @@
 package ru.sbrf.file_loader.config;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.springframework.context.annotation.Bean;
@@ -8,13 +9,16 @@ import org.springframework.kafka.annotation.EnableKafka;
 import org.springframework.kafka.core.DefaultKafkaProducerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.core.ProducerFactory;
-import ru.sbrf.file_loader.model.FileLink;
+import org.springframework.kafka.listener.DefaultErrorHandler;
+import org.springframework.kafka.support.ExponentialBackOffWithMaxRetries;
 
 import java.util.HashMap;
 import java.util.Map;
 
+
 @Configuration
 @EnableKafka
+@Slf4j
 public class KafkaConfig {
 
     @Bean
@@ -29,5 +33,29 @@ public class KafkaConfig {
     @Bean
     public KafkaTemplate<String, String> kafkaTemplate() {
         return new KafkaTemplate<>(producerFactory());
+    }
+
+    @Bean
+    public DefaultErrorHandler errorHandler(KafkaTemplate<String, String> kafkaTemplate) {
+        // Настройка backoff - стратегия повторных попыток с увеличением времени
+        ExponentialBackOffWithMaxRetries backOff = new ExponentialBackOffWithMaxRetries(5);
+        backOff.setInitialInterval(1000L);
+        backOff.setMultiplier(2);
+        backOff.setMaxInterval(10000L);
+
+        // Обработчик ошибок с использованием backoff
+        DefaultErrorHandler errorHandler = new DefaultErrorHandler(backOff);
+        errorHandler.addNotRetryableExceptions(IllegalStateException.class); // Исключаем повторные попытки для IllegalStateException
+
+        // Логирование ошибок
+        errorHandler.setRetryListeners((record, exception, deliveryAttempt) -> {
+            if (exception instanceof IllegalStateException) {
+                log.error("Duplicate record found for requestId: {}, attempt: {}", record.key(), deliveryAttempt);
+            } else {
+                log.error("Error while processing record, attempt: {}, exception: {}", deliveryAttempt, exception.getMessage());
+            }
+        });
+
+        return errorHandler;
     }
 }

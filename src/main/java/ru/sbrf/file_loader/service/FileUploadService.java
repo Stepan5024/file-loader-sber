@@ -5,8 +5,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import ru.sbrf.file_loader.controller.request.UploadRequest;
+import ru.sbrf.file_loader.controller.response.FileStatus;
 import ru.sbrf.file_loader.controller.response.FileStatusResponse;
-import ru.sbrf.file_loader.model.*;
+import ru.sbrf.file_loader.exception.DataValueException;
+import ru.sbrf.file_loader.model.FileLink;
+import ru.sbrf.file_loader.model.FileUploadEntity;
 import ru.sbrf.file_loader.repository.FileUploadRepository;
 import ru.sbrf.file_loader.util.JsonUtil;
 
@@ -26,6 +29,19 @@ public class FileUploadService {
     public void logUploadRequest(UploadRequest request) {
         log.info("Received upload request: {}", request);
         for (FileLink fileLink : request.getFileLinks()) {
+            // Проверка дубликатов перед сохранением
+            boolean duplicateExists = fileUploadRepository.existsByRequestIdAndFileLinkAndStatus(
+                    request.getRequestId(),
+                    fileLink.getFileLink(),
+                    "pending"
+            );
+
+            if (duplicateExists) {
+                log.error("Duplicate request found for requestId: {}, fileLink: {}, status: 'pending'",
+                        request.getRequestId(), fileLink.getFileLink());
+                throw new DataValueException("Duplicate record found for requestId, fileLink, and status 'pending'");
+            }
+
             FileUploadEntity entity = new FileUploadEntity(request.getRequestId(), fileLink.getFileLink(), "pending");
             fileUploadRepository.save(entity);
             log.info("Saved file upload entity: {} with status 'pending'", fileLink.getFileLink());
@@ -47,12 +63,13 @@ public class FileUploadService {
     public FileStatusResponse getStatus(String requestId) {
         log.info("Fetching status for requestId: {}", requestId);
 
-        List<FileUploadEntity> files = fileUploadRepository.findByRequestId(requestId);
-        List<FileStatus> fileStatuses = files.stream()
+        List<FileUploadEntity> latestFileStatuses = fileUploadRepository.findLatestStatusByRequestId(requestId);
+
+        List<FileStatus> fileStatuses = latestFileStatuses.stream()
                 .map(f -> new FileStatus(f.getFileLink(), f.getStatus()))
                 .collect(Collectors.toList());
 
-        log.info("Found {} files for requestId: {}", fileStatuses.size(), requestId);
+        log.info("Found {} latest files for requestId: {}", fileStatuses.size(), requestId);
 
         return new FileStatusResponse(requestId, fileStatuses);
     }

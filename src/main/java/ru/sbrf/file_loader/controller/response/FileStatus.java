@@ -1,4 +1,4 @@
-package ru.sbrf.file_loader.model;
+package ru.sbrf.file_loader.controller.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -8,6 +8,5 @@ import lombok.Data;
 public class FileStatus {
     private String fileLink;
     private String status;
-
 
 }

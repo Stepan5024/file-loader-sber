@@ -5,9 +5,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ru.sbrf.file_loader.aspect.annotation.Loggable;
-import ru.sbrf.file_loader.controller.response.FileStatusResponse;
-import ru.sbrf.file_loader.model.StatusRequest;
+import ru.sbrf.file_loader.controller.response.FileStatus;
+import ru.sbrf.file_loader.controller.request.StatusRequest;
 import ru.sbrf.file_loader.controller.request.UploadRequest;
+import ru.sbrf.file_loader.controller.response.FileStatusResponse;
 import ru.sbrf.file_loader.service.FileUploadService;
 
 @RestController("Загрузка и статус файлов")

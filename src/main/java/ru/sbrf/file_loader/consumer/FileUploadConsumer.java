@@ -3,12 +3,15 @@ package ru.sbrf.file_loader.consumer;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.stereotype.Service;
+import ru.sbrf.file_loader.exception.DataValueException;
+import ru.sbrf.file_loader.loader.FileUploader;
 import ru.sbrf.file_loader.model.FileLink;
 import ru.sbrf.file_loader.model.FileUploadEntity;
 import ru.sbrf.file_loader.repository.FileUploadRepository;
-import org.springframework.kafka.support.KafkaHeaders;
 import ru.sbrf.file_loader.util.JsonUtil;
 
 @Service
@@ -17,26 +20,37 @@ import ru.sbrf.file_loader.util.JsonUtil;
 public class FileUploadConsumer {
 
     private final FileUploadRepository fileUploadRepository;
+    private final KafkaTemplate<String, String> kafkaTemplate;
+    private final FileUploader fileUploader;
 
     @KafkaListener(topics = "file_upload_topic", groupId = "file_upload_group")
     public void handleFileUpload(String fileLinkJson, @Header(KafkaHeaders.RECEIVED_KEY) String requestId) {
+        try {
+            FileLink fileLink = JsonUtil.fromJson(fileLinkJson, FileLink.class);
 
-        FileLink fileLink = JsonUtil.fromJson(fileLinkJson, FileLink.class);
+            assert fileLink != null;
+            log.info("Received file link for processing: {}, requestId: {}", fileLink.getFileLink(), requestId);
+            updateFileStatus(requestId, fileLink.getFileLink(), "in_progress");
 
-        assert fileLink != null;
-        log.info("Received file link for processing: {}, requestId: {}", fileLink.getFileLink(), requestId);
-        // Обновление статуса на "in_progress"
-        log.info("Updating status of file {} to 'in_progress'", fileLink.getFileLink());
+            boolean success = fileUploader.uploadFile(fileLink);
+            String status = success ? "done" : "failed";
+            updateFileStatus(requestId, fileLink.getFileLink(), status);
 
-        updateFileStatus(requestId, fileLink.getFileLink(), "in_progress");
+        } catch (IllegalStateException e) {
+            log.error("Duplicate request for requestId: {} and fileLink: {}", requestId, e.getMessage(), e);
+            // Отправка сообщения об ошибке
+            sendErrorMessageToClient(requestId, "Duplicate record found.");
+            throw e; // выбрасываем исключение дальше для Kafka
+        } catch (Exception e) {
+            log.error("Error processing file upload: {}", e.getMessage(), e);
+        }
+    }
 
-        // Выполнение REST-запроса для загрузки файла (например, через RestTemplate)
-        boolean success = uploadFile(fileLink);
-        log.info("File upload {} for file {}: {}", success ? "successful" : "failed", fileLink.getFileLink(), success);
-
-        String status = success ? "done" : "failed";
-        log.info("Updating status of file {} to '{}'", fileLink.getFileLink(), status);
-        updateFileStatus(requestId, fileLink.getFileLink(), status);
+    private void sendErrorMessageToClient(String requestId, String errorMessage) {
+        // Реализуйте логику отправки ошибки через Kafka или REST
+        log.info("Sending error message to client for requestId {}: {}", requestId, errorMessage);
+        // Например, отправка в другую тему Kafka для обратной связи
+        kafkaTemplate.send("file_upload_error_topic", requestId, errorMessage);
     }
 
     private boolean uploadFile(FileLink fileLink) {
@@ -49,10 +63,18 @@ public class FileUploadConsumer {
     }
 
     private void updateFileStatus(String requestId, String fileLink, String status) {
-        FileUploadEntity fileEntity = fileUploadRepository.findByRequestIdAndFileLink(requestId, fileLink);
-        fileEntity.setStatus(status);
-        fileUploadRepository.save(fileEntity);
-        log.info("Updated file status in DB: requestId: {}, fileLink: {}, newStatus: {}", requestId, fileLink, status);
+        boolean duplicateExists = fileUploadRepository.existsByRequestIdAndFileLinkAndStatus(requestId, fileLink, status);
+
+        if (duplicateExists) {
+            log.warn("Duplicate status update for requestId: {}, fileLink: {}, status: {}", requestId, fileLink, status);
+            throw new DataValueException("Duplicate record with the same status found for requestId, fileLink, and status");
+        }
+
+        // Создание новой записи с новым статусом
+        FileUploadEntity newEntity = new FileUploadEntity(requestId, fileLink, status);
+        fileUploadRepository.save(newEntity);
+        log.info("Added new log entry for requestId: {}, fileLink: {}, status: {}", requestId, fileLink, status);
 
     }
+
 }

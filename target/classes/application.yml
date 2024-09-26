@@ -19,3 +19,10 @@ spring:
   jpa:
     hibernate:
       ddl-auto: none
+
+file:
+  upload:
+    min:
+      delay: 10_000
+    max:
+      delay: 60_000

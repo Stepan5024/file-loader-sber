@@ -1,8 +1,6 @@
-package ru.sbrf.file_loader.model;
+package ru.sbrf.file_loader.controller.request;
 
 import lombok.Data;
-
-import java.util.List;
 
 @Data
 public class StatusRequest {

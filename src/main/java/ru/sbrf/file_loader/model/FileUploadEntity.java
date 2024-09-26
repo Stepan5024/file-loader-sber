@@ -6,6 +6,8 @@ import lombok.NoArgsConstructor;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "file_upload")
 @Data
@@ -29,4 +31,6 @@ public class FileUploadEntity {
     @Column(name = "status")
     private String status;
 
+    @Column(name = "timestamp", nullable = false, updatable = false)
+    private LocalDateTime timestamp = LocalDateTime.now();
 }
