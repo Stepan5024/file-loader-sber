@@ -2,13 +2,15 @@ package ru.sbrf.file_loader.model;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
 @Entity
-@Table(name = "file_uploads")
+@Table(name = "file_upload")
 @Data
 @RequiredArgsConstructor
+@NoArgsConstructor
 public class FileUploadEntity {
 
     @Id

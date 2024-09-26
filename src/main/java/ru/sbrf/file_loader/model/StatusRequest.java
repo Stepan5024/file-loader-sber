@@ -5,9 +5,7 @@ import lombok.Data;
 import java.util.List;
 
 @Data
-public class UploadRequest {
+public class StatusRequest {
     private String requestId;
-    private String consumer;
-    private List<FileLink> fileLinks;
-
 }
+

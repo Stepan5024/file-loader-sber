@@ -1,3 +1,4 @@
+
 spring:
   application:
     name: file-loader
@@ -8,7 +9,13 @@ spring:
     producer:
       bootstrap-servers: localhost:9092
   datasource:
-    url: jdbc:h2:mem:testdb
+    url: jdbc:h2:mem:file-loader
     driver-class-name: org.h2.Driver
     username: sa
     password: password
+  h2:
+    console:
+      enabled: true
+  jpa:
+    hibernate:
+      ddl-auto: none

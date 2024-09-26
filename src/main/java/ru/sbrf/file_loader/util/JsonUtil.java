@@ -28,4 +28,13 @@ public class JsonUtil {
             return String.valueOf(object);
         }
     }
+
+    public static <T> T fromJson(String json, Class<T> clazz) {
+        try {
+            return objectMapper.readValue(json, clazz);
+        } catch (JsonProcessingException e) {
+            log.error("Failed to convert JSON to object of type {}", clazz.getSimpleName(), e);
+            return null; // Вернем null, если десериализация не удалась
+        }
+    }
 }
