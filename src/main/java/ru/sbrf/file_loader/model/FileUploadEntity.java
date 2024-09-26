@@ -38,4 +38,5 @@ public class FileUploadEntity {
 
     @Column(name = "timestamp", nullable = false, updatable = false)
     private LocalDateTime timestamp = LocalDateTime.now();
+
 }

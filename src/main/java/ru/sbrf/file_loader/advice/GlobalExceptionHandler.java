@@ -47,7 +47,7 @@ public class GlobalExceptionHandler {
                 .map(FileLink::getFileLink) // Преобразуем каждый дубликат в строку (fileLink)
                 .collect(Collectors.joining(", ", "Duplicate records: [", "]"));
 
-        // Сообщение об ошибFке включает описание и список дубликатов
+
         String errorMessage = e.getMessage() + ". " + duplicatesMessage;
 
         // Создаем объект ErrorDetail с новым сообщением

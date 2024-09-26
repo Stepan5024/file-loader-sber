@@ -21,6 +21,6 @@ services:
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-      KAFKA_CREATE_TOPICS: "file_upload_topic:1:1"  # Создание топика: имя:количество_партиций:репликация
+      KAFKA_CREATE_TOPICS: "file_upload_topic:10:1"
     depends_on:
       - zookeeper

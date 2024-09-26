@@ -16,6 +16,8 @@ import ru.sbrf.file_loader.util.JsonUtil;
 import ru.sbrf.file_loader.validate.FileUploadValidator;
 
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 @Service
@@ -24,13 +26,13 @@ import java.util.stream.Collectors;
 public class FileUploadService {
 
     private final KafkaTemplate<String, String> kafkaTemplate;
-
     private final FileUploadValidator fileUploadValidator;
     private final FileUploadProcessor fileUploadProcessor;
     private final FileUploadRepository fileUploadRepository;
 
 
-
+    // Пул потоков для параллельной обработки запросов клиентов
+    private final ExecutorService clientExecutorService = Executors.newCachedThreadPool();
 
     public void checkAndProcessUploadRequest(UploadRequest request) {
         log.info("Received upload request: {}", request);
@@ -38,9 +40,16 @@ public class FileUploadService {
         // Шаг 1: Валидация
         List<FileLink> duplicateLinks = fileUploadValidator.validate(request);
 
-        // Шаг 2: Обработка корректных данных
+        // Шаг 2: Параллельная обработка файлов для каждого клиента
+        clientExecutorService.submit(() -> processClientFiles(request, duplicateLinks));
+    }
+
+    // Метод для обработки файлов клиента
+    private void processClientFiles(UploadRequest request, List<FileLink> duplicateLinks) {
+        // Шаг 2.1: Обработка корректных данных
         for (FileLink fileLink : request.getFileLinks()) {
             if (!duplicateLinks.contains(fileLink)) {
+                // Загружаем файлы последовательно для клиента
                 fileUploadProcessor.process(request, fileLink);
             }
         }
@@ -55,7 +64,6 @@ public class FileUploadService {
         }
     }
 
-
     // Отправляем файлы на обработку
     public void processFileUploadRequest(UploadRequest request) {
         log.info("Processing file upload request for requestId: {}", request.getRequestId());
@@ -63,6 +71,7 @@ public class FileUploadService {
         for (FileLink fileLink : request.getFileLinks()) {
             String fileLinkJson = JsonUtil.toJson(fileLink);
             log.info("Sending file link {} to Kafka topic: {}", fileLinkJson, "file_upload_topic");
+            // в качестве ключа Название клиента
             kafkaTemplate.send("file_upload_topic", request.getRequestId(), fileLinkJson);
         }
     }

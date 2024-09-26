@@ -23,6 +23,6 @@ spring:
 file:
   upload:
     min:
-      delay: 10_000
-    max:
       delay: 60_000
+    max:
+      delay: 100_000

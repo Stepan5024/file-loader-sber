@@ -1,5 +1,6 @@
 package ru.sbrf.file_loader.service;
 
+import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -16,6 +17,7 @@ public class FileUploadProcessor {
     FileUploadRepository fileUploadRepository;
 
     // Логируем запрос в БД
+    @Transactional
     public void process(UploadRequest request, FileLink fileLink) {
         FileUploadEntity entity = new FileUploadEntity(request.getRequestId(),
                 fileLink.getFileLink(),
