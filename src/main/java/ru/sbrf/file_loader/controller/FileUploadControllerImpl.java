@@ -3,9 +3,9 @@ package ru.sbrf.file_loader.controller;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RestController;
 import ru.sbrf.file_loader.aspect.annotation.Loggable;
-import ru.sbrf.file_loader.controller.response.FileStatus;
 import ru.sbrf.file_loader.controller.request.StatusRequest;
 import ru.sbrf.file_loader.controller.request.UploadRequest;
 import ru.sbrf.file_loader.controller.response.FileStatusResponse;
@@ -21,12 +21,7 @@ public class FileUploadControllerImpl implements FileUploadController {
     @Loggable
     @Override
     public ResponseEntity<?> sendFiles(UploadRequest request) {
-        // Логируем запрос в БД
-        fileUploadService.logUploadRequest(request);
-
-        // Отправляем каждый fileLink в Kafka для обработки
-        fileUploadService.processFileUploadRequest(request);
-
+        fileUploadService.checkAndProcessUploadRequest(request);
         return ResponseEntity.ok("Files are being processed");
     }
 

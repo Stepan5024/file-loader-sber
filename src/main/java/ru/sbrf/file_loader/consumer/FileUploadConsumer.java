@@ -7,7 +7,6 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.stereotype.Service;
-import ru.sbrf.file_loader.exception.DataValueException;
 import ru.sbrf.file_loader.loader.FileUploader;
 import ru.sbrf.file_loader.model.FileLink;
 import ru.sbrf.file_loader.model.FileStatusEnum;
@@ -55,12 +54,6 @@ public class FileUploadConsumer {
     }
 
     private void updateFileStatus(String requestId, String fileLink, FileStatusEnum status) {
-        boolean duplicateExists = fileUploadRepository.existsByRequestIdAndFileLinkAndStatus(requestId, fileLink, status);
-
-        if (duplicateExists) {
-            log.warn("Duplicate status update for requestId: {}, fileLink: {}, status: {}", requestId, fileLink, status);
-            throw new DataValueException("Duplicate record with the same status found for requestId, fileLink, and status");
-        }
 
         // Создание новой записи с новым статусом
         FileUploadEntity newEntity = new FileUploadEntity(requestId, fileLink, status);
