@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import ru.sbrf.file_loader.exception.DataValueException;
 import ru.sbrf.file_loader.loader.FileUploader;
 import ru.sbrf.file_loader.model.FileLink;
+import ru.sbrf.file_loader.model.FileStatusEnum;
 import ru.sbrf.file_loader.model.FileUploadEntity;
 import ru.sbrf.file_loader.repository.FileUploadRepository;
 import ru.sbrf.file_loader.util.JsonUtil;
@@ -30,10 +31,10 @@ public class FileUploadConsumer {
 
             assert fileLink != null;
             log.info("Received file link for processing: {}, requestId: {}", fileLink.getFileLink(), requestId);
-            updateFileStatus(requestId, fileLink.getFileLink(), "in_progress");
+            updateFileStatus(requestId, fileLink.getFileLink(), FileStatusEnum.IN_PROGRESS);
 
             boolean success = fileUploader.uploadFile(fileLink);
-            String status = success ? "done" : "failed";
+            FileStatusEnum status = success ? FileStatusEnum.DONE :FileStatusEnum.FAILED;
             updateFileStatus(requestId, fileLink.getFileLink(), status);
 
         } catch (IllegalStateException e) {
@@ -53,16 +54,7 @@ public class FileUploadConsumer {
         kafkaTemplate.send("file_upload_error_topic", requestId, errorMessage);
     }
 
-    private boolean uploadFile(FileLink fileLink) {
-        // Здесь реализация REST-запроса для загрузки данных
-        log.info("Uploading file: {}", fileLink.getFileLink());
-        // Например, использование RestTemplate для отправки запроса
-        boolean success = true;  // Заглушка для успешной загрузки
-        log.info("Upload result for file {}: {}", fileLink.getFileLink(), success ? "success" : "failure");
-        return success;
-    }
-
-    private void updateFileStatus(String requestId, String fileLink, String status) {
+    private void updateFileStatus(String requestId, String fileLink, FileStatusEnum status) {
         boolean duplicateExists = fileUploadRepository.existsByRequestIdAndFileLinkAndStatus(requestId, fileLink, status);
 
         if (duplicateExists) {

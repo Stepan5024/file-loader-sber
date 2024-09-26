@@ -9,6 +9,7 @@ import ru.sbrf.file_loader.controller.response.FileStatus;
 import ru.sbrf.file_loader.controller.response.FileStatusResponse;
 import ru.sbrf.file_loader.exception.DataValueException;
 import ru.sbrf.file_loader.model.FileLink;
+import ru.sbrf.file_loader.model.FileStatusEnum;
 import ru.sbrf.file_loader.model.FileUploadEntity;
 import ru.sbrf.file_loader.repository.FileUploadRepository;
 import ru.sbrf.file_loader.util.JsonUtil;
@@ -33,7 +34,7 @@ public class FileUploadService {
             boolean duplicateExists = fileUploadRepository.existsByRequestIdAndFileLinkAndStatus(
                     request.getRequestId(),
                     fileLink.getFileLink(),
-                    "pending"
+                    FileStatusEnum.PENDING
             );
 
             if (duplicateExists) {
@@ -42,7 +43,7 @@ public class FileUploadService {
                 throw new DataValueException("Duplicate record found for requestId, fileLink, and status 'pending'");
             }
 
-            FileUploadEntity entity = new FileUploadEntity(request.getRequestId(), fileLink.getFileLink(), "pending");
+            FileUploadEntity entity = new FileUploadEntity(request.getRequestId(), fileLink.getFileLink(),  FileStatusEnum.PENDING);
             fileUploadRepository.save(entity);
             log.info("Saved file upload entity: {} with status 'pending'", fileLink.getFileLink());
         }

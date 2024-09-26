@@ -27,9 +27,10 @@ public class FileUploadEntity {
     @Column(name = "file_link")
     private String fileLink;
 
+    @Enumerated(EnumType.STRING)
     @NonNull
     @Column(name = "status")
-    private String status;
+    private FileStatusEnum status;
 
     @Column(name = "timestamp", nullable = false, updatable = false)
     private LocalDateTime timestamp = LocalDateTime.now();

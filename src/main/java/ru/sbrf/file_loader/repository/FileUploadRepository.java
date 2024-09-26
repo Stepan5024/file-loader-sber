@@ -2,6 +2,7 @@ package ru.sbrf.file_loader.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import ru.sbrf.file_loader.model.FileStatusEnum;
 import ru.sbrf.file_loader.model.FileUploadEntity;
 
 import java.util.List;
@@ -10,7 +11,7 @@ public interface FileUploadRepository extends JpaRepository<FileUploadEntity, Lo
     List<FileUploadEntity> findByRequestId(String requestId);
 
     List<FileUploadEntity> findByRequestIdAndFileLink(String requestId, String fileLink);
-    boolean existsByRequestIdAndFileLinkAndStatus(String requestId, String fileLink, String status);
+    boolean existsByRequestIdAndFileLinkAndStatus(String requestId, String fileLink, FileStatusEnum status);
 
     boolean existsByRequestIdAndFileLink(String requestId, String fileLink);
 
