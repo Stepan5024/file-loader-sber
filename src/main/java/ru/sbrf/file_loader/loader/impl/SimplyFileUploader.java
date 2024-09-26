@@ -11,7 +11,7 @@ import java.util.Random;
 
 @Service
 @Slf4j
-public class GoogleDocsFileUploader implements FileUploader {
+public class SimplyFileUploader implements FileUploader {
 
     private final Random random = new Random();
 
