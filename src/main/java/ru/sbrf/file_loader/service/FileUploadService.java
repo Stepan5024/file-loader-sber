@@ -41,7 +41,7 @@ public class FileUploadService {
         // Шаг 2: Обработка корректных данных
         for (FileLink fileLink : request.getFileLinks()) {
             if (!duplicateLinks.contains(fileLink)) {
-                fileUploadProcessor.process(request.getRequestId(), fileLink);
+                fileUploadProcessor.process(request, fileLink);
             }
         }
 

@@ -22,7 +22,7 @@ public class FileUploadControllerImpl implements FileUploadController {
     @Override
     public ResponseEntity<?> sendFiles(UploadRequest request) {
         fileUploadService.checkAndProcessUploadRequest(request);
-        return ResponseEntity.ok("Files are being processed");
+        return ResponseEntity.ok("OK");
     }
 
     @Loggable

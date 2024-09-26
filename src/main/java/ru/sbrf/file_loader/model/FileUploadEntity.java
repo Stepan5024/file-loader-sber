@@ -32,6 +32,10 @@ public class FileUploadEntity {
     @Column(name = "status")
     private FileStatusEnum status;
 
+    @NonNull
+    @Column(name = "consumer_name") // добавлено поле для consumerName
+    private String consumerName;
+
     @Column(name = "timestamp", nullable = false, updatable = false)
     private LocalDateTime timestamp = LocalDateTime.now();
 }
